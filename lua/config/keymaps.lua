@@ -232,3 +232,163 @@ end, { desc = "Copy full file path to clipboard" })
 
 vim.api.nvim_set_keymap("n", "<leader>gdw", ":tab Git diff --word-diff<CR>",
   { noremap = true, silent = true })
+
+
+
+
+---------------------------------------------------------------------------------------
+-- Folke's default keys
+-- ~/.config/nvim/lua/config/keymaps.lua
+
+local map = vim.keymap.set
+local opts = { noremap = true, silent = true }
+
+-- =============================================================================
+-- ||    ____ _               _                                              ||
+-- ||   / ___| |__   ___  ___| | __                                           ||
+-- ||  | |   | '_ \ / _ \/ __| |/ /                                           ||
+-- ||  | |___| | | |  __/ (__|   <                                            ||
+-- ||   \____|_| |_|\___|\___|_|\_\                                           ||
+-- ||                                                                         ||
+-- =============================================================================
+
+-- Remap space as leader key
+map("", "<Space>", "<Nop>", opts)
+vim.g.mapleader = " "
+vim.g.maplocalleader = "\\"
+
+-- Save file
+map({ "i", "x", "n", "s" }, "<C-s>", "<cmd>w<cr><esc>", { desc = "Save file" })
+
+-- Quit
+map("n", "<leader>q", "<cmd>q<cr>", { desc = "Quit" })
+map("n", "<leader>Q", "<cmd>qa!<cr>", { desc = "Quit All" })
+
+-- Clear search highlighting
+map("n", "<leader>ur", "<cmd>nohlsearch<cr>", { desc = "Clear Search Highlight" })
+
+-- Move between windows
+map("n", "<C-h>", "<C-w>h", { desc = "Go to Left Window" })
+map("n", "<C-j>", "<C-w>j", { desc = "Go to Lower Window" })
+map("n", "<C-k>", "<C-w>k", { desc = "Go to Upper Window" })
+map("n", "<C-l>", "<C-w>l", { desc = "Go to Right Window" })
+
+-- Window management
+map("n", "<leader>sv", "<C-w>v", { desc = "Split Vertically" })
+map("n", "<leader>sh", "<C-w>s", { desc = "Split Horizontally" })
+map("n", "<leader>se", "<C-w>=", { desc = "Make Splits Equal" })
+map("n", "<leader>sx", "<cmd>close<cr>", { desc = "Close Current Split" })
+
+-- Tab management
+map("n", "<leader>to", "<cmd>tabnew<cr>", { desc = "Open New Tab" })
+map("n", "<leader>tx", "<cmd>tabclose<cr>", { desc = "Close Current Tab" })
+map("n", "<leader>tn", "<cmd>tabn<cr>", { desc = "Go to Next Tab" })
+map("n", "<leader>tp", "<cmd>tabp<cr>", { desc = "Go to Previous Tab" })
+
+-- =============================================================================
+-- ||   ____  _             _                                                 ||
+-- ||  |  _ \| | __ _ _ __ | | __                                             ||
+-- ||  | |_) | |/ _` | '_ \| |/ /                                             ||
+-- ||  |  __/| | (_| | | | |   <                                              ||
+-- ||  |_|   |_|\__,_|_| |_|_|\_\                                             ||
+-- ||                                                                         ||
+-- =============================================================================
+
+-- -----------------------------------------------------------------------------
+-- -- FZF-LUA
+-- -----------------------------------------------------------------------------
+-- This requires your utils/git.lua file
+local function get_git_root()
+  return require("utils.git").get_git_root()
+end
+
+map("n", "<leader><leader>", function()
+  require("fzf-lua-frecency").frecency({ cwd = get_git_root(), cwd_only = true, previewer = false })
+end, { desc = "Find Files (Frecency)" })
+map("n", "<leader>ff", function()
+  require("fzf-lua").files({ cwd = get_git_root() })
+end, { desc = "Find Files (Project)" })
+map("n", "<leader>fg", function()
+  require("fzf-lua").live_grep({ cwd = get_git_root() })
+end, { desc = "Find in Files (Grep)" })
+map("n", "<leader>fb", "<cmd>FzfLua buffers<cr>", { desc = "Find Buffers" })
+map("n", "<leader>fh", "<cmd>FzfLua help_tags<cr>", { desc = "Find Help" })
+map("n", "<leader>fo", "<cmd>FzfLua oldfiles<cr>", { desc = "Find Recent Files" })
+map("n", "<leader>fc", function()
+  require("fzf-lua").files({ cwd = vim.fn.stdpath("config") })
+end, { desc = "Find Config File" })
+
+-- -----------------------------------------------------------------------------
+-- -- LSP (Language Server Protocol)
+-- -----------------------------------------------------------------------------
+-- Note: LSP keymaps are set in the lsp.lua plugin file's on_attach function
+-- to ensure they only apply to buffers with an active LSP client.
+-- This section is a placeholder for non-on_attach LSP keymaps if needed.
+-- See lua/plugins/lsp.lua for the main mappings (gd, K, etc.)
+
+-- -----------------------------------------------------------------------------
+-- -- COPILOT & CODECOMPANION (AI)
+-- -----------------------------------------------------------------------------
+map("n", "<leader>ac", "<cmd>CodeCompanionChat<cr>", { desc = "AI Chat (CodeCompanion)" })
+
+-- -----------------------------------------------------------------------------
+-- -- OIL (File Manager)
+-- -----------------------------------------------------------------------------
+map("n", "-", "<cmd>Oil<cr>", { desc = "Open File Manager (Oil)" })
+
+-- -----------------------------------------------------------------------------
+-- -- NOICE (UI)
+-- -----------------------------------------------------------------------------
+map("n", "<leader>sn", "<cmd>Noice history<cr>", { desc = "Noice History" })
+map("n", "<leader>sa", "<cmd>Noice all<cr>", { desc = "Show All Noice Messages" })
+map("n", "<leader>sd", "<cmd>Noice dismiss<cr>", { desc = "Dismiss All Noice Messages" })
+
+-- -----------------------------------------------------------------------------
+-- -- GIT (Gitsigns & Fugitive)
+-- -----------------------------------------------------------------------------
+-- Gitsigns
+map("n", "]h", function()
+  if vim.wo.diff then
+    return "]c"
+  end
+  vim.schedule(function()
+    require("gitsigns").next_hunk()
+  end)
+  return "<Ignore>"
+end, { expr = true, desc = "Next Hunk" })
+
+map("n", "[h", function()
+  if vim.wo.diff then
+    return "[c"
+  end
+  vim.schedule(function()
+    require("gitsigns").prev_hunk()
+  end)
+  return "<Ignore>"
+end, { expr = true, desc = "Previous Hunk" })
+
+map({ "n", "v" }, "<leader>hs", ":Gitsigns stage_hunk<CR>", { desc = "Stage Hunk" })
+map("n", "<leader>hu", "<cmd>Gitsigns undo_stage_hunk<cr>", { desc = "Undo Stage Hunk" })
+map({ "n", "v" }, "<leader>hr", ":Gitsigns reset_hunk<CR>", { desc = "Reset Hunk" })
+map("n", "<leader>hS", "<cmd>Gitsigns stage_buffer<cr>", { desc = "Stage Buffer" })
+map("n", "<leader>hR", "<cmd>Gitsigns reset_buffer<cr>", { desc = "Reset Buffer" })
+map("n", "<leader>hp", "<cmd>Gitsigns preview_hunk<cr>", { desc = "Preview Hunk" })
+map("n", "<leader>hb", "<cmd>Gitsigns blame_line<cr>", { desc = "Blame Line" })
+
+-- Fugitive
+map("n", "<leader>gs", "<cmd>Git<cr>", { desc = "Git Status (Fugitive)" })
+
+-- -----------------------------------------------------------------------------
+-- -- WHICH-KEY
+-- -----------------------------------------------------------------------------
+map("n", "<leader>?", function()
+  require("which-key").show({ global = false })
+end, { desc = "Buffer Keymaps (which-key)" })
+
+-- -----------------------------------------------------------------------------
+-- -- TROUBLE (Diagnostics)
+-- -----------------------------------------------------------------------------
+map("n", "<leader>xx", "<cmd>Trouble diagnostics toggle<cr>", { desc = "Workspace Diagnostics" })
+map("n", "<leader>xd", "<cmd>Trouble diagnostics toggle filter.buf=0<cr>", { desc = "Document Diagnostics" })
+map("n", "<leader>xq", "<cmd>Trouble qflist toggle<cr>", { desc = "Quickfix List" })
+map("n", "<leader>xl", "<cmd>Trouble loclist toggle<cr>", { desc = "Location List" })

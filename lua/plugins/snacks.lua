@@ -75,7 +75,9 @@ return {
     },
     lazygit = {
       enabled = true,
-    }
+    },
+    terminal = {
+    },
   },
   bufdelete = {
     enabled = true,
