@@ -73,12 +73,18 @@ return {
         },
       },
     },
+
     lazygit = {
       enabled = true,
     },
-    terminal = {
-    },
+
   },
+  
+    session = {
+      enabled = true, -- enable session management
+      root = vim.fn.stdpath("data") .. "/sessions", -- default save location
+      autosave = true, -- automatically save session on exit
+    },
   bufdelete = {
     enabled = true,
   },
