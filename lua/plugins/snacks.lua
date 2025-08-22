@@ -48,7 +48,6 @@ return {
             action = function()
               -- Load fzf-lua and call files with proper cwd
               local git_utils = require("utils.git")
-              
               require("fzf-lua").files({
                 cwd = git_utils.get_git_root(),
                 fd_opts = [[--color=never --hidden --type f --type l --exclude .git --no-ignore]],
@@ -77,14 +76,20 @@ return {
     lazygit = {
       enabled = true,
     },
-
-  },
-  
-    session = {
-      enabled = true, -- enable session management
-      root = vim.fn.stdpath("data") .. "/sessions", -- default save location
-      autosave = true, -- automatically save session on exit
+    statuscolumn = {
+      enabled = true 
     },
+    -- highlighting the block
+    -- indent = {
+    --   enabled = true,
+    --   animate = {
+    --     enabled = false,
+    --   },
+    --   scope = {
+    --     enabled = false,
+    --   },
+    -- },
+  },
   bufdelete = {
     enabled = true,
   },

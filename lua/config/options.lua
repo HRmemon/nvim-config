@@ -12,6 +12,8 @@ opt.relativenumber = true
 opt.clipboard = "unnamedplus"
 
 opt.confirm = true
+opt.foldcolumn = '3'
+opt.signcolumn = 'yes'
 
 opt.scrolloff = 0
 opt.wrap = false -- optional, turns off line wrapping
@@ -47,3 +49,4 @@ opt.wildignore:append({
 	"**/.next/**",
 	"**/coverage/**",
 })
+
