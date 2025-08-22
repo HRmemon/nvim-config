@@ -13,143 +13,151 @@
 -- All helper functions used by the keymaps below are defined in this section.
 --- Copies the content of all listed buffers into the system clipboard.
 local function copy_buffers_to_clipboard()
-  local buffers = vim.fn.getbufinfo({ buflisted = 1, bufloaded = 1 })
-  if not buffers or #buffers == 0 then vim.notify("No listed buffers to copy.", vim.log.levels.WARN)
-    return
-  end
+	local buffers = vim.fn.getbufinfo({ buflisted = 1, bufloaded = 1 })
+	if not buffers or #buffers == 0 then
+		vim.notify("No listed buffers to copy.", vim.log.levels.WARN)
+		return
+	end
 
-  local contents = {}
-  for _, buf in ipairs(buffers) do
-    local lines = vim.api.nvim_buf_get_lines(buf.bufnr, 0, -1, false)
-    table.insert(contents, table.concat(lines, "\n"))
-  end
+	local contents = {}
+	for _, buf in ipairs(buffers) do
+		local lines = vim.api.nvim_buf_get_lines(buf.bufnr, 0, -1, false)
+		table.insert(contents, table.concat(lines, "\n"))
+	end
 
-  local all_text = table.concat(contents, "\n\n--- Buffer Separator ---\n\n")
-  vim.fn.setreg("+", all_text)
-  vim.notify("Copied " .. #buffers .. " buffer(s) to system clipboard.", vim.log.levels.INFO)
+	local all_text = table.concat(contents, "\n\n--- Buffer Separator ---\n\n")
+	vim.fn.setreg("+", all_text)
+	vim.notify("Copied " .. #buffers .. " buffer(s) to system clipboard.", vim.log.levels.INFO)
 end
 --- Swaps predefined file paths on the current line.
 local function swap_path_line()
-  local paths = {
-    ["/home/safi/safihasanfaraz%-share"] = "/home/hassan/sharefiles-text",
-    ["/home/hassan/sharefiles%-text"] = "/home/safi/safihasanfaraz-share",
-  }
-  local line = vim.api.nvim_get_current_line()
-  local new_line = line
+	local paths = {
+		["/home/safi/safihasanfaraz%-share"] = "/home/hassan/sharefiles-text",
+		["/home/hassan/sharefiles%-text"] = "/home/safi/safihasanfaraz-share",
+	}
+	local line = vim.api.nvim_get_current_line()
+	local new_line = line
 
-  for from_path, to_path in pairs(paths) do
-    if line:find(from_path) then
-      new_line = line:gsub(from_path, to_path)
-      break
-    end
-  end
+	for from_path, to_path in pairs(paths) do
+		if line:find(from_path) then
+			new_line = line:gsub(from_path, to_path)
+			break
+		end
+	end
 
-  if new_line ~= line then
-    vim.api.nvim_set_current_line(new_line)
-    vim.notify("Path swapped on current line.", vim.log.levels.INFO)
-  else
-    vim.notify("No matching path found on this line.", vim.log.levels.WARN)
-  end
+	if new_line ~= line then
+		vim.api.nvim_set_current_line(new_line)
+		vim.notify("Path swapped on current line.", vim.log.levels.INFO)
+	else
+		vim.notify("No matching path found on this line.", vim.log.levels.WARN)
+	end
 end
 
 --- Swaps predefined file paths throughout the entire buffer.
 local function swap_paths_file()
-  local paths = {
-    ["/home/safi/safihasanfaraz%-share"] = "/home/hassan/sharefiles-text",
-    ["/home/hassan/sharefiles%-text"] = "/home/safi/safihasanfaraz-share",
-  }
-  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
-  local changes_made = false
-  local modified_lines = {}
+	local paths = {
+		["/home/safi/safihasanfaraz%-share"] = "/home/hassan/sharefiles-text",
+		["/home/hassan/sharefiles%-text"] = "/home/safi/safihasanfaraz-share",
+	}
+	local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+	local changes_made = false
+	local modified_lines = {}
 
-  for _, line in ipairs(lines) do
-    local new_line = line
-    for from_path, to_path in pairs(paths) do
-      if line:find(from_path) then
-        new_line = line:gsub(from_path, to_path)
-        changes_made = true
-        break -- Only apply the first match per line
-      end
-    end
-    table.insert(modified_lines, new_line)
-  end
+	for _, line in ipairs(lines) do
+		local new_line = line
+		for from_path, to_path in pairs(paths) do
+			if line:find(from_path) then
+				new_line = line:gsub(from_path, to_path)
+				changes_made = true
+				break -- Only apply the first match per line
+			end
+		end
+		table.insert(modified_lines, new_line)
+	end
 
-  if changes_made then
-    vim.api.nvim_buf_set_lines(0, 0, -1, false, modified_lines)
-    vim.notify("All matching paths swapped in the file.", vim.log.levels.INFO)
-  else
-    vim.notify("No matching paths found in the file.", vim.log.levels.WARN)
-  end
+	if changes_made then
+		vim.api.nvim_buf_set_lines(0, 0, -1, false, modified_lines)
+		vim.notify("All matching paths swapped in the file.", vim.log.levels.INFO)
+	else
+		vim.notify("No matching paths found in the file.", vim.log.levels.WARN)
+	end
 end
 
 --- Smartly wraps the current line in Markdown comment syntax if not already commented.
 vim.api.nvim_create_user_command("SmartMdComment", function()
-  local line = vim.fn.getline(".")
-  if not line:match("^%s*<!%-%-") and not line:match("%-%->%s*$") then
-    local commented = string.format("<!-- `%s` -->", vim.trim(line))
-    vim.fn.setline(".", commented)
-  end
+	local line = vim.fn.getline(".")
+	if not line:match("^%s*<!%-%-") and not line:match("%-%->%s*$") then
+		local commented = string.format("<!-- `%s` -->", vim.trim(line))
+		vim.fn.setline(".", commented)
+	end
 end, {})
 
 --- Dynamic 'gf' that resolves variables in a path before opening the file.
 local function dynamic_gf()
-  local function resolve_var(var)
-    -- 1) Scan upwards in the current buffer for the variable definition
-    local cur_line_num = vim.api.nvim_win_get_cursor(0)[1]
-    local lines = vim.api.nvim_buf_get_lines(0, 0, cur_line_num, false)
-    for i = #lines, 1, -1 do
-      local line = lines[i]
-      local dbl = line:match(var .. '%s*=%s*"([^"]+)"')
-      local sng = line:match(var .. "%s*=%s*'([^']+)'")
-      if dbl or sng then
-        return dbl or sng
-      end
-    end
+	local function resolve_var(var)
+		-- 1) Scan upwards in the current buffer for the variable definition
+		local cur_line_num = vim.api.nvim_win_get_cursor(0)[1]
+		local lines = vim.api.nvim_buf_get_lines(0, 0, cur_line_num, false)
+		for i = #lines, 1, -1 do
+			local line = lines[i]
+			local dbl = line:match(var .. '%s*=%s*"([^"]+)"')
+			local sng = line:match(var .. "%s*=%s*'([^']+)'")
+			if dbl or sng then
+				return dbl or sng
+			end
+		end
 
-    -- 2) Fallback to LSP definition if not found locally
-    local clients = vim.lsp.get_active_clients({ bufnr = 0 })
-    if #clients == 0 then return nil, "no active LSP client" end
-    local client = clients[1]
-    local enc = client.offset_encoding or "utf-16"
-    local params = vim.lsp.util.make_position_params(nil, enc)
-    local results = vim.lsp.buf_request_sync(0, "textDocument/definition", params, 500)
-    if not results then return nil, "no LSP definition found" end
+		-- 2) Fallback to LSP definition if not found locally
+		local clients = vim.lsp.get_active_clients({ bufnr = 0 })
+		if #clients == 0 then
+			return nil, "no active LSP client"
+		end
+		local client = clients[1]
+		local enc = client.offset_encoding or "utf-16"
+		local params = vim.lsp.util.make_position_params(nil, enc)
+		local results = vim.lsp.buf_request_sync(0, "textDocument/definition", params, 500)
+		if not results then
+			return nil, "no LSP definition found"
+		end
 
-    for _, resp in pairs(results) do
-      for _, loc in ipairs(resp.result or {}) do
-        local bufnr = vim.fn.bufnr(vim.fn.uri_to_fname(loc.uri))
-        vim.api.nvim_buf_load(bufnr)
-        local line = vim.api.nvim_buf_get_lines(bufnr, loc.range.start.line, loc.range.start.line + 1, false)[1] or ""
-        local dbl, sng = line:match('"(.-)"'), line:match("'(.-)'")
-        if dbl or sng then return dbl or sng end
-      end
-    end
+		for _, resp in pairs(results) do
+			for _, loc in ipairs(resp.result or {}) do
+				local bufnr = vim.fn.bufnr(vim.fn.uri_to_fname(loc.uri))
+				vim.api.nvim_buf_load(bufnr)
+				local line = vim.api.nvim_buf_get_lines(bufnr, loc.range.start.line, loc.range.start.line + 1, false)[1]
+					or ""
+				local dbl, sng = line:match('"(.-)"'), line:match("'(.-)'")
+				if dbl or sng then
+					return dbl or sng
+				end
+			end
+		end
 
-    return nil, "no string literal found in definition"
-  end
+		return nil, "no string literal found in definition"
+	end
 
-  local target = vim.fn.expand("<cWORD>")
-  local has_vars = false
-  local real_path, err_msg = target:gsub("{(.-)}", function(var)
-    has_vars = true
-    local val, err = resolve_var(var)
-    if not val then
-      err_msg = ("Could not resolve {%s}: %s"):format(var, err)
-      return "{" .. var .. "}" -- Return original if unresolved
-    end
-    return val
-  end)
+	local target = vim.fn.expand("<cWORD>")
+	local has_vars = false
+	local real_path, err_msg = target:gsub("{(.-)}", function(var)
+		has_vars = true
+		local val, err = resolve_var(var)
+		if not val then
+			err_msg = ("Could not resolve {%s}: %s"):format(var, err)
+			return "{" .. var .. "}" -- Return original if unresolved
+		end
+		return val
+	end)
 
-  if err_msg then
-    vim.notify(err_msg, vim.log.levels.WARN)
-    return -- Abort if any variable failed to resolve
-  end
+	if err_msg then
+		vim.notify(err_msg, vim.log.levels.WARN)
+		return -- Abort if any variable failed to resolve
+	end
 
-  if not has_vars then
-    vim.cmd("normal! gf") -- No variables found, use standard gf
-  else
-    vim.cmd("edit " .. vim.fn.fnameescape(real_path))
-  end
+	if not has_vars then
+		vim.cmd("normal! gf") -- No variables found, use standard gf
+	else
+		vim.cmd("edit " .. vim.fn.fnameescape(real_path))
+	end
 end
 
 -- =============================================================================
@@ -158,18 +166,33 @@ end
 
 -- Clipboard
 vim.keymap.set({ "n", "x" }, "<leader>r", 'ggVG"+p', { desc = "Replace File with System Clipboard" })
-vim.keymap.set("n", "<F1>", ":%y+<CR>", { noremap = true, silent = true, desc = "Yank Entire File to System Clipboard" })
+vim.keymap.set(
+	"n",
+	"<F1>",
+	":%y+<CR>",
+	{ noremap = true, silent = true, desc = "Yank Entire File to System Clipboard" }
+)
 vim.keymap.set("n", "<F2>", function()
-  local filepath = vim.fn.expand("%:p")
-  vim.fn.setreg("+", filepath)
-  vim.notify("Copied file path: " .. filepath)
+	local filepath = vim.fn.expand("%:p")
+	vim.fn.setreg("+", filepath)
+	vim.notify("Copied file path: " .. filepath)
 end, { desc = "Copy Full File Path to Clipboard" })
 
 -- Scrolling & Motion
 vim.keymap.set({ "n", "x" }, "<C-d>", "<C-d>zz", { desc = "Scroll Down and Center" })
 vim.keymap.set({ "n", "x" }, "<C-u>", "<C-u>zz", { desc = "Scroll Up and Center" })
-vim.keymap.set({ "n", "x" }, "j", "v:count == 0 ? 'gj' : 'j'", { expr = true, silent = true, desc = "Down (Handles Wrapped Lines)" })
-vim.keymap.set({ "n", "x" }, "k", "v:count == 0 ? 'gk' : 'k'", { expr = true, silent = true, desc = "Up (Handles Wrapped Lines)" })
+vim.keymap.set(
+	{ "n", "x" },
+	"j",
+	"v:count == 0 ? 'gj' : 'j'",
+	{ expr = true, silent = true, desc = "Down (Handles Wrapped Lines)" }
+)
+vim.keymap.set(
+	{ "n", "x" },
+	"k",
+	"v:count == 0 ? 'gk' : 'k'",
+	{ expr = true, silent = true, desc = "Up (Handles Wrapped Lines)" }
+)
 vim.keymap.set("n", "J", "mzJ`z", { desc = "Join Lines Without Moving Cursor" })
 
 -- Search
@@ -186,6 +209,7 @@ vim.keymap.set({ "i", "n" }, "<esc>", "<esc><cmd>noh<cr>", { desc = "Escape and 
 vim.keymap.set("n", "Q", "q", { noremap = true, desc = "Disable Ex Mode" })
 vim.keymap.set("n", "<leader>sc", ":SmartMdComment<CR>", { desc = "Smart Comment Markdown Line" })
 vim.keymap.set("n", "gF", dynamic_gf, { noremap = true, silent = true, desc = "Go to File (Dynamic Path)" })
+vim.keymap.set({ "n", "x", "i" }, "<C-s>", "<esc>:w<cr>", { desc = "Saves the file" })
 
 -- =============================================================================
 -- Window & Buffer Management
@@ -205,8 +229,12 @@ vim.keymap.set("n", "<leader>wo", "<C-W>o", { desc = "Close Other Windows", rema
 
 -- Buffer Actions
 vim.keymap.set("n", "<leader>fn", "<cmd>enew<cr>", { desc = "New File (Buffer)" })
-vim.keymap.set("n", "<leader>bd", function() require("snacks").bufdelete() end, { desc = "Delete Buffer" })
-vim.keymap.set("n", "<leader>bo", function() require("snacks").bufdelete.other() end, { desc = "Delete Other Buffers" })
+vim.keymap.set("n", "<leader>bd", function()
+	require("snacks").bufdelete()
+end, { desc = "Delete Buffer" })
+vim.keymap.set("n", "<leader>bo", function()
+	require("snacks").bufdelete.other()
+end, { desc = "Delete Other Buffers" })
 vim.keymap.set("n", "<leader>by", copy_buffers_to_clipboard, { desc = "Copy All Buffers to Clipboard" })
 
 -- =============================================================================
@@ -218,22 +246,46 @@ vim.keymap.set("n", "<leader>ac", "<cmd>CodeCompanionChat Toggle<cr>", { desc = 
 vim.keymap.set("n", "<leader>ai", "<cmd>CodeCompanionActions<cr>", { desc = "Code Companion Actions" })
 
 -- Diagnostics
-vim.keymap.set("n", "]d", function() vim.diagnostic.goto_next() end, { desc = "Next Diagnostic" })
-vim.keymap.set("n", "[d", function() vim.diagnostic.goto_prev() end, { desc = "Prev Diagnostic" })
-vim.keymap.set("n", "]e", function() vim.diagnostic.goto_next({ severity = "ERROR" }) end, { desc = "Next Error" })
-vim.keymap.set("n", "[e", function() vim.diagnostic.goto_prev({ severity = "ERROR" }) end, { desc = "Prev Error" })
-vim.keymap.set("n", "]w", function() vim.diagnostic.goto_next({ severity = "WARN" }) end, { desc = "Next Warning" })
-vim.keymap.set("n", "[w", function() vim.diagnostic.goto_prev({ severity = "WARN" }) end, { desc = "Prev Warning" })
+vim.keymap.set("n", "]d", function()
+	vim.diagnostic.goto_next()
+end, { desc = "Next Diagnostic" })
+vim.keymap.set("n", "[d", function()
+	vim.diagnostic.goto_prev()
+end, { desc = "Prev Diagnostic" })
+vim.keymap.set("n", "]e", function()
+	vim.diagnostic.goto_next({ severity = "ERROR" })
+end, { desc = "Next Error" })
+vim.keymap.set("n", "[e", function()
+	vim.diagnostic.goto_prev({ severity = "ERROR" })
+end, { desc = "Prev Error" })
+vim.keymap.set("n", "]w", function()
+	vim.diagnostic.goto_next({ severity = "WARN" })
+end, { desc = "Next Warning" })
+vim.keymap.set("n", "[w", function()
+	vim.diagnostic.goto_prev({ severity = "WARN" })
+end, { desc = "Prev Warning" })
 
 -- Noice (UI Enhancements)
-vim.keymap.set("c", "<S-Enter>", function() require("noice").redirect(vim.fn.getcmdline()) end, { desc = "Redirect Cmdline to Noice" })
-vim.keymap.set("n", "<leader>snl", function() require("noice").cmd("last") end, { desc = "Noice Last Message" })
-vim.keymap.set("n", "<leader>snh", function() require("noice").cmd("history") end, { desc = "Noice History" })
-vim.keymap.set("n", "<leader>sna", function() require("noice").cmd("all") end, { desc = "Noice All" })
-vim.keymap.set("n", "<leader>snd", function() require("noice").cmd("dismiss") end, { desc = "Noice Dismiss All" })
+vim.keymap.set("c", "<S-Enter>", function()
+	require("noice").redirect(vim.fn.getcmdline())
+end, { desc = "Redirect Cmdline to Noice" })
+vim.keymap.set("n", "<leader>snl", function()
+	require("noice").cmd("last")
+end, { desc = "Noice Last Message" })
+vim.keymap.set("n", "<leader>snh", function()
+	require("noice").cmd("history")
+end, { desc = "Noice History" })
+vim.keymap.set("n", "<leader>sna", function()
+	require("noice").cmd("all")
+end, { desc = "Noice All" })
+vim.keymap.set("n", "<leader>snd", function()
+	require("noice").cmd("dismiss")
+end, { desc = "Noice Dismiss All" })
 
 -- Overseer (Task Runner)
-vim.keymap.set("n", "<leader>or", function() require("overseer").run_template({ name = "Run current file" }) end, { desc = "Run Current File with Overseer" })
+vim.keymap.set("n", "<leader>or", function()
+	require("overseer").run_template({ name = "Run current file" })
+end, { desc = "Run Current File with Overseer" })
 
 -- Quickfix List
 vim.keymap.set("n", "<leader>xq", "<cmd>copen<cr>", { desc = "Open Quickfix List" })
@@ -242,10 +294,10 @@ vim.keymap.set("n", "]q", "<cmd>cnext<cr>", { desc = "Next Quickfix Item" })
 
 -- Snacks / Lazygit
 if vim.fn.executable("lazygit") == 1 then
-  vim.keymap.set("n", "<leader>gg", function()
-    local git_root = require("utils.git").get_git_root()
-    require("snacks").lazygit({ cwd = git_root or vim.loop.cwd() })
-  end, { desc = "Lazygit (Smart CWD)" })
+	vim.keymap.set("n", "<leader>gg", function()
+		local git_root = require("utils.git").get_git_root()
+		require("snacks").lazygit({ cwd = git_root or vim.loop.cwd() })
+	end, { desc = "Lazygit (Smart CWD)" })
 end
 
 -- =============================================================================
@@ -254,27 +306,32 @@ end
 
 -- Toggle Settings
 vim.keymap.set("n", "<leader>uw", function()
-  vim.wo.wrap = not vim.wo.wrap
-  vim.notify("Wrap: " .. (vim.wo.wrap and "ON" or "OFF"))
+	vim.wo.wrap = not vim.wo.wrap
+	vim.notify("Wrap: " .. (vim.wo.wrap and "ON" or "OFF"))
 end, { desc = "Toggle Wrap" })
 
 local diagnostics_active = true
 vim.keymap.set("n", "<leader>ud", function()
-  diagnostics_active = not diagnostics_active
-  vim.diagnostic.enable(diagnostics_active)
-  vim.notify("Diagnostics " .. (diagnostics_active and "Enabled" or "Disabled"), vim.log.levels.INFO)
+	diagnostics_active = not diagnostics_active
+	vim.diagnostic.enable(diagnostics_active)
+	vim.notify("Diagnostics " .. (diagnostics_active and "Enabled" or "Disabled"), vim.log.levels.INFO)
 end, { desc = "Toggle Diagnostics" })
 
 -- Terminals
 vim.keymap.set("n", "<leader>fz", "<cmd>FloatermToggle<cr>", { desc = "Toggle Floaterm" })
 vim.keymap.set({ "n", "i", "v", "t" }, "<C-/>", function()
-  local git_root = require("utils.git").get_git_root()
-  require("snacks").terminal.toggle(nil, { cwd = git_root or vim.loop.cwd() })
+	local git_root = require("utils.git").get_git_root()
+	require("snacks").terminal.toggle(nil, { cwd = git_root or vim.loop.cwd() })
 end, { desc = "Toggle Terminal (Git Root or CWD)" })
 vim.keymap.set("t", "<Esc><Esc>", "<cmd>close<cr>", { desc = "Hide Terminal" }) -- Use double-escape to exit
 
 -- Git
-vim.keymap.set("n", "<leader>gdw", ":tab Git diff --word-diff<CR>", { noremap = true, silent = true, desc = "Git Word Diff" })
+vim.keymap.set(
+	"n",
+	"<leader>gdw",
+	":tab Git diff --word-diff<CR>",
+	{ noremap = true, silent = true, desc = "Git Word Diff" }
+)
 
 -- Package Management
 vim.keymap.set("n", "<leader>l", "<cmd>Lazy<cr>", { desc = "Lazy Package Manager" })
@@ -284,28 +341,26 @@ vim.keymap.set("n", "<leader>cm", "<cmd>Mason<cr>", { desc = "Mason Installer" }
 vim.keymap.set("n", "<leader>an", swap_path_line, { noremap = true, desc = "Swap File Path (Current Line)" })
 vim.keymap.set("n", "<leader>aN", swap_paths_file, { noremap = true, desc = "Swap File Paths (Entire File)" })
 
-
 ----- Persistence (folke : session management)
 -- Restore session for current directory
 vim.keymap.set("n", "<leader>qs", function()
-  require("persistence").load()
+	require("persistence").load()
 end, { desc = "Restore session" })
 
 -- Restore last session
 vim.keymap.set("n", "<leader>ql", function()
-  require("persistence").load({ last = true })
+	require("persistence").load({ last = true })
 end, { desc = "Restore last session" })
 
 -- Select a session to load
 vim.keymap.set("n", "<leader>qS", function()
-  require("persistence").select()
+	require("persistence").select()
 end, { desc = "Select session" })
 
 -- Stop saving sessions
 vim.keymap.set("n", "<leader>qd", function()
-  require("persistence").stop()
+	require("persistence").stop()
 end, { desc = "Stop session saving" })
-
 
 -- =============================================================================
 -- Legacy / Commented-Out

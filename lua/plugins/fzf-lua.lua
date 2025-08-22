@@ -57,6 +57,7 @@ return {
       { "<leader>fb", "<cmd>FzfLua buffers<cr>", desc = "Find Buffers" },
       { "<leader>fg", "<cmd>FzfLua git_files<cr>", desc = "Find Git Files" },
       { "<leader>fh", "<cmd>FzfLua help_tags<cr>", desc = "Find Help Tags" },
+      { "<leader>sk", "<cmd>FzfLua keymaps<cr>" , desc = "Show all keymaps" },
     }
   end,
   config = function()
