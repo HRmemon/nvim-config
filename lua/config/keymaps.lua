@@ -362,6 +362,28 @@ vim.keymap.set("n", "<leader>qd", function()
 	require("persistence").stop()
 end, { desc = "Stop session saving" })
 
+-- Treesitter Objects
+
+-- ====== from folke directly ======
+-- commenting
+vim.keymap.set("n", "gco", "o<esc>Vcx<esc><cmd>normal gcc<cr>fxa<bs>", { desc = "Add Comment Below" })
+vim.keymap.set("n", "gcO", "O<esc>Vcx<esc><cmd>normal gcc<cr>fxa<bs>", { desc = "Add Comment Above" })
+
+-- tabs
+vim.keymap.set("n", "<leader><tab>l", "<cmd>tablast<cr>", { desc = "Last Tab" })
+vim.keymap.set("n", "<leader><tab>o", "<cmd>tabonly<cr>", { desc = "Close Other Tabs" })
+vim.keymap.set("n", "<leader><tab>f", "<cmd>tabfirst<cr>", { desc = "First Tab" })
+vim.keymap.set("n", "<leader><tab><tab>", "<cmd>tabnew<cr>", { desc = "New Tab" })
+vim.keymap.set("n", "<leader><tab>]", "<cmd>tabnext<cr>", { desc = "Next Tab" })
+vim.keymap.set("n", "<leader><tab>d", "<cmd>tabclose<cr>", { desc = "Close Tab" })
+vim.keymap.set("n", "<leader><tab>[", "<cmd>tabprevious<cr>", { desc = "Previous Tab" })
+
+-- Treesitter Textobjects
+-- vim.keymap.set({ "o", "x" }, "af", "Treesitter Function (around)")
+-- vim.keymap.set({ "o", "x" }, "if", "Treesitter Function (inside)")
+-- vim.keymap.set({ "o", "x" }, "ac", "Treesitter Class (around)")
+-- vim.keymap.set({ "o", "x" }, "ic", "Treesitter Class (inside)")
+
 -- =============================================================================
 -- Legacy / Commented-Out
 -- =============================================================================
