@@ -33,7 +33,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
 			require("fzf-lua").lsp_definitions()
 		end, opts)
 
-		vim.keymap.set("n", "grr", function()
+		vim.keymap.set("n", "gr", function()
 			require("fzf-lua").lsp_references()
 		end, opts)
 

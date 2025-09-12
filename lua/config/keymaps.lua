@@ -282,11 +282,6 @@ vim.keymap.set("n", "<leader>snd", function()
 	require("noice").cmd("dismiss")
 end, { desc = "Noice Dismiss All" })
 
--- Overseer (Task Runner)
-vim.keymap.set("n", "<leader>or", function()
-	require("overseer").run_template({ name = "Run current file" })
-end, { desc = "Run Current File with Overseer" })
-
 -- Quickfix List
 vim.keymap.set("n", "<leader>xq", "<cmd>copen<cr>", { desc = "Open Quickfix List" })
 vim.keymap.set("n", "[q", "<cmd>cprev<cr>", { desc = "Previous Quickfix Item" })
@@ -299,6 +294,9 @@ if vim.fn.executable("lazygit") == 1 then
 		require("snacks").lazygit({ cwd = git_root or vim.loop.cwd() })
 	end, { desc = "Lazygit (Smart CWD)" })
 end
+
+-- fugitive
+vim.keymap.set("n", "<leader>gv", "<cmd>Gvdiffsplit<cr>", { desc = "Git Vertical Diff" })
 
 -- =============================================================================
 -- Utility & Miscellaneous
@@ -413,3 +411,9 @@ vim.keymap.set("n", "<leader><tab>[", "<cmd>tabprevious<cr>", { desc = "Previous
 -- --- Alternative bufferline mappings (might be handled by another plugin)
 -- vim.keymap.set("n", "[b", "<cmd>bprevious<cr>", { desc = "Prev Buffer" })
 -- vim.keymap.set("n", "]b", "<cmd>bnext<cr>", { desc = "Next Buffer" })
+
+-- Resize window using <ctrl> arrow keys
+vim.keymap.set("n", "<C-Up>", "<cmd>resize +2<cr>", { desc = "Increase Window Height" })
+vim.keymap.set("n", "<C-Down>", "<cmd>resize -2<cr>", { desc = "Decrease Window Height" })
+vim.keymap.set("n", "<C-Left>", "<cmd>vertical resize -2<cr>", { desc = "Decrease Window Width" })
+vim.keymap.set("n", "<C-Right>", "<cmd>vertical resize +2<cr>", { desc = "Increase Window Width" })

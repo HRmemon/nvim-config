@@ -147,3 +147,22 @@ vim.api.nvim_create_autocmd({ "BufWritePre" }, {
 		vim.fn.mkdir(vim.fn.fnamemodify(file, ":p:h"), "p")
 	end,
 })
+
+-- Define your custom highlight group
+vim.api.nvim_set_hl(0, "WordUnderCursor", { bg = "#494542" }) -- pick your color
+
+-- Highlight word under cursor with it
+vim.api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
+	callback = function()
+		local word = vim.fn.expand("<cword>")
+		if word ~= "" then
+			vim.fn.matchadd("WordUnderCursor", "\\V\\<" .. word .. "\\>")
+		end
+	end,
+})
+
+vim.api.nvim_create_autocmd("CursorMoved", {
+	callback = function()
+		vim.fn.clearmatches()
+	end,
+})
