@@ -4,7 +4,7 @@ return {
 		event = "InsertEnter",
 		-- optional: provides snippets for the snippet source
 		-- dependencies = { 'rafamadriz/friendly-snippets' },
-		dependencies = { "fang2hou/blink-copilot" },
+		dependencies = { "fang2hou/blink-copilot", { "saghen/blink.compat", branch = "main" } },
 
 		-- use a release tag to download pre-built binaries
 		version = "1.*",

@@ -155,8 +155,10 @@ vim.api.nvim_set_hl(0, "WordUnderCursor", { bg = "#494542" }) -- pick your color
 vim.api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
 	callback = function()
 		local word = vim.fn.expand("<cword>")
-		if word ~= "" then
-			vim.fn.matchadd("WordUnderCursor", "\\V\\<" .. word .. "\\>")
+		if #word >= 1 then
+			local escaped = vim.fn.escape(word, "\\/.*$^~[]") -- escape regex specials
+			-- local escaped = print(vim.fn.escape("*******/", "\\/.*$^~[]")) -- escape regex specials
+			vim.fn.matchadd("WordUnderCursor", "\\V\\<" .. escaped .. "\\>")
 		end
 	end,
 })

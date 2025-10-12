@@ -1,0 +1,10 @@
+{
+	"log": {
+		"prefix": "clg",
+		"body": "console.log(${1:msg});"
+	},
+	"todo": {
+		"prefix": "td",
+		"body": "// TODO: ${1:describe task}"
+	}
+}

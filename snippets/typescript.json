@@ -1,0 +1,48 @@
+{
+	"for-loop": {
+		"prefix": "fori",
+		"body": [
+			"for (let ${1:i} = 0; ${1:i} < ${2:array}.length; ${1:i}++) {",
+			"  const ${3:element} = ${2:array}[${1:i}];",
+			"  $0",
+			"}"
+		],
+		"desc": "Basic for loop"
+	},
+
+	"if-condition": {
+		"prefix": "if",
+		"body": ["if (${1:condition}) {", "  $0", "}"],
+		"desc": "If condition"
+	},
+
+	"fn": {
+		"prefix": "fn",
+		"body": "function ${1:name}(${2:args}) { $0 }",
+		"desc": "Function"
+	},
+
+	"arrow-fn": {
+		"prefix": "afn",
+		"body": "const ${1:name} = (${2:args}) => { $0 };",
+		"desc": "Arrow function"
+	},
+
+	"async-fn": {
+		"prefix": "aafn",
+		"body": "const ${1:name} = async (${2:args}) => { $0 };",
+		"desc": "Async arrow function"
+	},
+
+	"try-catch": {
+		"prefix": "tc",
+		"body": [
+			"try {",
+			"  $1",
+			"} catch (${2:error}) {",
+			"  console.error(${2:error});",
+			"}"
+		],
+		"desc": "Try/catch block"
+	}
+}

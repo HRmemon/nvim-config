@@ -25,9 +25,9 @@ return {
 			typescript = { "biome" },
 			javascriptreact = { "biome" },
 			typescriptreact = { "biome" },
-			json = { "prettierd" },
-			html = { "prettierd" },
-			css = { "prettierd" },
+			json = { "biome" },
+			html = { "prettier" },
+			css = { "prettier" },
 		},
 		-- Set default options
 		default_format_opts = {

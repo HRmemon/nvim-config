@@ -177,6 +177,8 @@ vim.keymap.set("n", "<F2>", function()
 	vim.fn.setreg("+", filepath)
 	vim.notify("Copied file path: " .. filepath)
 end, { desc = "Copy Full File Path to Clipboard" })
+-- Run ctx as a shell command when pressing F3
+vim.keymap.set("n", "<F3>", ":!ctx<CR>", { noremap = true, silent = true, desc = "Run ctx shell command" })
 
 -- Scrolling & Motion
 vim.keymap.set({ "n", "x" }, "<C-d>", "<C-d>zz", { desc = "Scroll Down and Center" })
@@ -200,6 +202,29 @@ vim.keymap.set("n", "n", "'Nn'[v:searchforward].'zv'", { expr = true, desc = "Ne
 vim.keymap.set("x", "n", "'Nn'[v:searchforward]", { expr = true, desc = "Next Search Result" })
 vim.keymap.set("n", "N", "'nN'[v:searchforward].'zv'", { expr = true, desc = "Prev Search Result" })
 vim.keymap.set("x", "N", "'nN'[v:searchforward]", { expr = true, desc = "Prev Search Result" })
+
+-- Snacks search
+-- vim.keymap.set("n", '<leader>s"', function() Snacks.picker.registers() end, {desc = "Registers" })
+-- vim.keymap.set("n", '<leader>s/', function() Snacks.picker.search_history() end, {desc = "Search History" })
+-- vim.keymap.set("n", "<leader>sa", function() Snacks.picker.autocmds() end, {desc = "Autocmds" })
+-- vim.keymap.set("n", "<leader>sb", function() Snacks.picker.lines() end, {desc = "Buffer Lines" })
+-- vim.keymap.set("n", "<leader>sc", function() Snacks.picker.command_history() end, {desc = "Command History" })
+-- vim.keymap.set("n", "<leader>sC", function() Snacks.picker.commands() end, {desc = "Commands" })
+-- vim.keymap.set("n", "<leader>sd", function() Snacks.picker.diagnostics() end, {desc = "Diagnostics" })
+-- vim.keymap.set("n", "<leader>sD", function() Snacks.picker.diagnostics_buffer() end, {desc = "Buffer Diagnostics" })
+-- vim.keymap.set("n", "<leader>sh", function() Snacks.picker.help() end, {desc = "Help Pages" })
+-- vim.keymap.set("n", "<leader>sH", function() Snacks.picker.highlights() end, {desc = "Highlights" })
+-- vim.keymap.set("n", "<leader>si", function() Snacks.picker.icons() end, {desc = "Icons" })
+-- vim.keymap.set("n", "<leader>sj", function() Snacks.picker.jumps() end, {desc = "Jumps" })
+-- vim.keymap.set("n", "<leader>sk", function() Snacks.picker.keymaps() end, {desc = "Keymaps" })
+-- vim.keymap.set("n", "<leader>sl", function() Snacks.picker.loclist() end, {desc = "Location List" })
+-- vim.keymap.set("n", "<leader>sm", function() Snacks.picker.marks() end, {desc = "Marks" })
+-- vim.keymap.set("n", "<leader>sM", function() Snacks.picker.man() end, {desc = "Man Pages" })
+-- vim.keymap.set("n", "<leader>sp", function() Snacks.picker.lazy() end, {desc = "Search for Plugin Spec" })
+-- vim.keymap.set("n", "<leader>sq", function() Snacks.picker.qflist() end, {desc = "Quickfix List" })
+-- vim.keymap.set("n", "<leader>sR", function() Snacks.picker.resume() end, {desc = "Resume" })
+-- vim.keymap.set("n", "<leader>su", function() Snacks.picker.undo() end, {desc = "Undo History" })
+-- vim.keymap.set("n", "<leader>uC", function() Snacks.picker.colorschemes() end, {desc = "Colorschemes" })
 
 -- Text Objects
 vim.keymap.set({ "o", "x" }, "ig", ":<C-u>normal! ggVG<CR>", { desc = "Select Entire File Text Object" })
@@ -316,7 +341,6 @@ vim.keymap.set("n", "<leader>ud", function()
 end, { desc = "Toggle Diagnostics" })
 
 -- Terminals
-vim.keymap.set("n", "<leader>fz", "<cmd>FloatermToggle<cr>", { desc = "Toggle Floaterm" })
 vim.keymap.set({ "n", "i", "v", "t" }, "<C-/>", function()
 	local git_root = require("utils.git").get_git_root()
 	require("snacks").terminal.toggle(nil, { cwd = git_root or vim.loop.cwd() })
@@ -324,12 +348,12 @@ end, { desc = "Toggle Terminal (Git Root or CWD)" })
 vim.keymap.set("t", "<Esc><Esc>", "<cmd>close<cr>", { desc = "Hide Terminal" }) -- Use double-escape to exit
 
 -- Git
-vim.keymap.set(
-	"n",
-	"<leader>gdw",
-	":tab Git diff --word-diff<CR>",
-	{ noremap = true, silent = true, desc = "Git Word Diff" }
-)
+-- vim.keymap.set(
+-- 	"n",
+-- 	"<leader>gdw",
+-- 	":tab Git diff --word-diff<CR>",
+-- 	{ noremap = true, silent = true, desc = "Git Word Diff" }
+-- )
 
 -- Package Management
 vim.keymap.set("n", "<leader>l", "<cmd>Lazy<cr>", { desc = "Lazy Package Manager" })
@@ -338,6 +362,9 @@ vim.keymap.set("n", "<leader>cm", "<cmd>Mason<cr>", { desc = "Mason Installer" }
 -- Custom Scripting
 vim.keymap.set("n", "<leader>an", swap_path_line, { noremap = true, desc = "Swap File Path (Current Line)" })
 vim.keymap.set("n", "<leader>aN", swap_paths_file, { noremap = true, desc = "Swap File Paths (Entire File)" })
+vim.keymap.set("i", "{<CR>", "{<CR>}<Esc>O", { noremap = true })
+vim.keymap.set("i", "(<CR>", "(<CR>)<Esc>O", { noremap = true })
+vim.keymap.set("i", "[<CR>", "[<CR>]<Esc>O", { noremap = true })
 
 ----- Persistence (folke : session management)
 -- Restore session for current directory
@@ -417,3 +444,106 @@ vim.keymap.set("n", "<C-Up>", "<cmd>resize +2<cr>", { desc = "Increase Window He
 vim.keymap.set("n", "<C-Down>", "<cmd>resize -2<cr>", { desc = "Decrease Window Height" })
 vim.keymap.set("n", "<C-Left>", "<cmd>vertical resize -2<cr>", { desc = "Decrease Window Width" })
 vim.keymap.set("n", "<C-Right>", "<cmd>vertical resize +2<cr>", { desc = "Increase Window Width" })
+
+-- Operator function that handles the actual checkbox toggling
+local function toggle_checkbox(motion)
+	local start_line, end_line
+
+	if motion then
+		-- Use marks from operator-pending mode
+		start_line = vim.api.nvim_buf_get_mark(0, "[")[1]
+		end_line = vim.api.nvim_buf_get_mark(0, "]")[1]
+	else
+		-- Single line operation
+		start_line = vim.fn.line(".")
+		end_line = start_line
+	end
+
+	for lnum = start_line, end_line do
+		local line = vim.api.nvim_buf_get_lines(0, lnum - 1, lnum, false)[1]
+		if line:match("^%- %[.].*") then
+			-- Remove checkbox
+			line = line:gsub("^%- %[.]", "", 1):gsub("^%s+", "", 1)
+		else
+			-- Add checkbox
+			line = "- [ ] " .. line
+		end
+		vim.api.nvim_buf_set_lines(0, lnum - 1, lnum, false, { line })
+	end
+end
+
+-- Wrapper function for operator-pending mode
+local function toggle_checkbox_op()
+	vim.o.operatorfunc = "v:lua.toggle_checkbox"
+	return "g@"
+end
+
+-- Set up mappings
+vim.keymap.set("n", "<leader>mc", toggle_checkbox_op, { expr = true, desc = "Add/Remove markdown checkbox" })
+vim.keymap.set("x", "<leader>mc", function()
+	toggle_checkbox(vim.fn.visualmode())
+end, { desc = "Add/Remove markdown checkbox in visual mode" })
+
+function markdown_toggle_checkbox()
+	local line = vim.api.nvim_get_current_line()
+	if line:match("^%- %[.].*") then
+		line = line:gsub("^%- %[.]", "", 1):gsub("^%s+", "", 1)
+	else
+		line = "- [ ] " .. line
+	end
+	vim.api.nvim_set_current_line(line)
+end
+
+-- tiny checkbox helpers (drop into init.lua)
+-- requires: tpope/vim-repeat
+
+local function add_remove_checkbox()
+	local line = vim.api.nvim_get_current_line()
+	local indent = line:match("^(%s*)") or ""
+	local rest = line:sub(#indent + 1)
+
+	-- if line already starts with "- [ ]" or "- [x]" (case-insensitive)
+	local head5 = rest:sub(1, 5)
+	if head5 == "- [ ]" or head5:lower() == "- [x]" then
+		local off = 5
+		if rest:sub(6, 6) == " " then
+			off = 6
+		end -- remove trailing space if present
+		local newrest = rest:sub(off + 1) or ""
+		vim.api.nvim_set_current_line(indent .. newrest)
+	else
+		-- add checkbox after indent
+		vim.api.nvim_set_current_line(indent .. "- [ ] " .. rest)
+	end
+end
+
+local function toggle_checkbox()
+	local line = vim.api.nvim_get_current_line()
+	local indent = line:match("^(%s*)") or ""
+	local rest = line:sub(#indent + 1)
+	local head5 = rest:sub(1, 5)
+
+	if head5 == "- [ ]" then
+		local suffix = rest:sub(6) or ""
+		vim.api.nvim_set_current_line(indent .. "- [x]" .. suffix)
+	elseif head5:lower() == "- [x]" then
+		local suffix = rest:sub(6) or ""
+		vim.api.nvim_set_current_line(indent .. "- [ ]" .. suffix)
+	end
+end
+
+-- Create <Plug> mappings that call the functions and register for repeat
+vim.keymap.set("n", "<Plug>(AddRemoveCheckbox)", function()
+	add_remove_checkbox()
+	-- register the <Plug> mapping with repeat.vim (use replace_termcodes)
+	vim.fn["repeat#set"](vim.api.nvim_replace_termcodes("<Plug>(AddRemoveCheckbox)", true, false, true))
+end, { silent = true, noremap = true })
+
+vim.keymap.set("n", "<Plug>(ToggleCheckbox)", function()
+	toggle_checkbox()
+	vim.fn["repeat#set"](vim.api.nvim_replace_termcodes("<Plug>(ToggleCheckbox)", true, false, true))
+end, { silent = true, noremap = true })
+
+-- Map your leader keys to those <Plug> mappings (use remap so <Plug> is invoked)
+vim.keymap.set("n", "<leader>oc", "<Plug>(AddRemoveCheckbox)", { remap = true, silent = true })
+vim.keymap.set("n", "<leader>ot", "<Plug>(ToggleCheckbox)", { remap = true, silent = true })
