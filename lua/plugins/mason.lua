@@ -22,6 +22,8 @@ return {
     opts = {
       ensure_installed = {
         "lua_ls",
+        -- "emmylua_ls",
+        -- "stylua",
         "pyright",
         "ts_ls",
         "prismals",
