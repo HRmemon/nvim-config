@@ -1,15 +1,19 @@
 return {
 	"linux-cultist/venv-selector.nvim",
-	event = "VeryLazy", -- or on specific filetypes, e.g., event = "FileType python"
 	dependencies = {
 		"neovim/nvim-lspconfig",
 	},
-	ft = "python", -- Load when opening Python files
+	-- Only load on keypress, not on file open
 	keys = {
-		{ ",v", "<cmd>VenvSelect<cr>" }, -- Open picker on keymap
+		{ ",v", "<cmd>VenvSelect<cr>", ft = "python", desc = "Select Python venv" },
 	},
-	opts = { -- this can be an empty lua table - just showing below for clarity.
-		search = {}, -- if you add your own searches, they go here.
-		options = {}, -- if you add plugin options, they go here.
+	opts = {
+		settings = {
+			search = {
+				project_venvs = {
+					command = "fd -HI -a -td --max-depth 2 -E __pycache__ -E .git ^(env|venv|\\.venv)$ .",
+				},
+			},
+		},
 	},
 }

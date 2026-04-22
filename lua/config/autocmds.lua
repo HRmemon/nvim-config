@@ -9,7 +9,7 @@
 vim.api.nvim_create_autocmd("FileType", {
   pattern = "markdown",
   callback = function()
-    vim.diagnostic.disable(0) -- no table, just a number
+    vim.diagnostic.enable(false, { bufnr = 0 })
   end,
 })
 
@@ -123,7 +123,7 @@ vim.api.nvim_create_autocmd("FileType", {
   pattern = { "text", "plaintex", "typst", "gitcommit", "markdown" },
   callback = function()
     vim.opt_local.wrap = true
-    vim.opt_local.spell = true
+    -- vim.opt_local.spell = true
   end,
 })
 
@@ -151,21 +151,30 @@ vim.api.nvim_create_autocmd({ "BufWritePre" }, {
 -- Define your custom highlight group
 vim.api.nvim_set_hl(0, "WordUnderCursor", { bg = "#494542" }) -- pick your color
 
--- Highlight word under cursor with it
+-- Highlight word under cursor (only clears own match, not all matches)
+local word_match_id = nil
 vim.api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
   callback = function()
+    -- Clear previous match if exists
+    if word_match_id then
+      pcall(vim.fn.matchdelete, word_match_id)
+      word_match_id = nil
+    end
     local word = vim.fn.expand("<cword>")
     if #word >= 1 then
-      local escaped = vim.fn.escape(word, "\\/.*$^~[]") -- escape regex specials
-      -- local escaped = print(vim.fn.escape("*******/", "\\/.*$^~[]")) -- escape regex specials
-      vim.fn.matchadd("WordUnderCursor", "\\V\\<" .. escaped .. "\\>")
+      local escaped = vim.fn.escape(word, "\\/.*$^~[]")
+      escaped = escaped:gsub("%*", "\\*")
+      word_match_id = vim.fn.matchadd("WordUnderCursor", "\\V\\<" .. escaped .. "\\>")
     end
   end,
 })
 
 vim.api.nvim_create_autocmd("CursorMoved", {
   callback = function()
-    vim.fn.clearmatches()
+    if word_match_id then
+      pcall(vim.fn.matchdelete, word_match_id)
+      word_match_id = nil
+    end
   end,
 })
 
@@ -183,86 +192,26 @@ vim.api.nvim_create_autocmd("LspAttach", {
 })
 
 
-vim.api.nvim_create_autocmd("LspAttach", {
-  callback = function(ev)
-    local bufnr = ev.buf
-    local opts = { buffer = bufnr, noremap = true, silent = true }
 
-    -- LSP keymaps
-    vim.keymap.set("n", "gd", function()
-      require("fzf-lua").lsp_definitions()
-    end, opts)
 
-    vim.keymap.set("n", "gr", function()
-      require("fzf-lua").lsp_references()
-    end, opts)
 
-    -- Additional LSP keymaps using fzf-lua
-    vim.keymap.set("n", "gD", function()
-      require("fzf-lua").lsp_declarations()
-    end, vim.tbl_extend("force", opts, { desc = "Go to Declaration" }))
+vim.api.nvim_create_user_command("CleanJsonDir", function()
+  local dir = vim.fn.expand("%:h")
+  local files = vim.fn.globpath(dir, "*.json", false, true)
 
-    vim.keymap.set("n", "gy", function()
-      require("fzf-lua").lsp_typedefs()
-    end, vim.tbl_extend("force", opts, { desc = "Go to Type Definition" }))
+  for _, file in ipairs(files) do
+    vim.cmd('edit ' .. vim.fn.fnameescape(file))
 
-    vim.keymap.set("n", "gi", function()
-      require("fzf-lua").lsp_implementations()
-    end, vim.tbl_extend("force", opts, { desc = "Go to Implementation" }))
+    vim.cmd([[normal! gg^"_xG$"_x]])
+    -- Apply substitutions safely (no error if not found)
+    vim.cmd([[%s/\("\|,\|\[\|{\|\}\)\zs\\n/\r/ge]])
+    vim.cmd([[%s/\\"/"/ge]])
 
-    vim.keymap.set("n", "<leader>fs", function()
-      require("fzf-lua").lsp_document_symbols()
-    end, vim.tbl_extend("force", opts, { desc = "Document Symbols" }))
 
-    vim.keymap.set("n", "<leader>fS", function()
-      require("fzf-lua").lsp_workspace_symbols()
-    end, vim.tbl_extend("force", opts, { desc = "Workspace Symbols" }))
 
-    vim.keymap.set("n", "<leader>fi", function()
-      require("fzf-lua").lsp_incoming_calls()
-    end, vim.tbl_extend("force", opts, { desc = "Incoming Calls" }))
+    vim.cmd('write')
+    vim.cmd('bdelete')
+  end
 
-    vim.keymap.set("n", "<leader>fo", function()
-      require("fzf-lua").lsp_outgoing_calls()
-    end, vim.tbl_extend("force", opts, { desc = "Outgoing Calls" }))
-
-    -- Code actions using fzf-lua
-    vim.keymap.set({ "n", "v" }, "<leader>ca", function()
-      require("fzf-lua").lsp_code_actions()
-    end, vim.tbl_extend("force", opts, { desc = "Code Actions" }))
-
-    -- Other LSP functionality (still using built-in as these don't benefit much from fzf)
-    vim.keymap.set("n", "K", vim.lsp.buf.hover, vim.tbl_extend("force", opts, { desc = "Hover Documentation" }))
-    -- vim.keymap.set(
-    -- 	"n",
-    -- 	"<C-k>",
-    -- 	vim.lsp.buf.signature_help,
-    -- 	vim.tbl_extend("force", opts, { desc = "Signature Help" })
-    -- )
-    vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, vim.tbl_extend("force", opts, { desc = "Rename Symbol" }))
-
-    -- Workspace management
-    vim.keymap.set(
-      "n",
-      "<leader>wa",
-      vim.lsp.buf.add_workspace_folder,
-      vim.tbl_extend("force", opts, { desc = "Add Workspace Folder" })
-    )
-    vim.keymap.set(
-      "n",
-      "<leader>wr",
-      vim.lsp.buf.remove_workspace_folder,
-      vim.tbl_extend("force", opts, { desc = "Remove Workspace Folder" })
-    )
-    vim.keymap.set("n", "<leader>wl", function()
-      print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
-    end, vim.tbl_extend("force", opts, { desc = "List Workspace Folders" }))
-
-    -- Enable inlay hints if supported (Neovim 0.10+)
-    if vim.lsp.inlay_hint and vim.lsp.inlay_hint.enable then
-      vim.keymap.set("n", "<leader>uh", function()
-        vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled())
-      end, vim.tbl_extend("force", opts, { desc = "Toggle Inlay Hints" }))
-    end
-  end,
-})
+  print("✅ Processed all JSON files in: " .. dir)
+end, {})

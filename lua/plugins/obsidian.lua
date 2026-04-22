@@ -1,55 +1,41 @@
+local notes_path = vim.fn.expand("~/notes")
+
 return {
-	"obsidian-nvim/obsidian.nvim",
-	version = "*", -- latest release
-	event = { "BufReadPre" },
-	ft = "markdown",
-	dependencies = {
-		"nvim-lua/plenary.nvim",
-	},
-	opts = {
-		legacy_commands = false, -- 🚀 future-proof, no more warnings
-
-		workspaces = {
-			{
-				name = "main",
-				path = "~/notes",
-			},
-		},
-
-		daily_notes = {
-			folder = "GOALS/daily",
-			template = "GOALS/templates/daily.md",
-		},
-
-		templates = {
-			folder = "GOALS/templates",
-		},
-
-		--- Add your keymaps here 👇
-		callbacks = {
-			enter_note = function(_, note)
-				-- Bail out if note is nil
-				if not note or not note.bufnr then
-					return
-				end
-
-				local map = function(lhs, rhs, desc)
-					vim.keymap.set("n", lhs, rhs, { buffer = note.bufnr, desc = desc })
-				end
-
-				map("<leader>od", "<cmd>Obsidian today<cr>", "Open daily note")
-				map("gf", "<cmd>Obsidian follow_link<cr>", "Follow Obsidian link")
-			end,
-		},
-		-- ui = {
-		-- 	checkboxes = {
-		-- 		[" "] = { char = "󰄱", hl_group = "obsidiantodo" },
-		-- 		["x"] = { char = "", hl_group = "obsidiandone" },
-		-- 	},
-		-- },
-		footer = {
-			format = "{{backlinks}} backlinks  {{properties}} properties  {{words}} words  {{chars}} chars",
-			enabled = true,
-		},
-	},
+  -- obsidian.nvim (community fork)
+  {
+    "obsidian-nvim/obsidian.nvim",
+    version = "*", -- use latest release (recommended)
+    -- only load for files in ~/notes/*.md
+    event = {
+      "BufReadPre " .. notes_path .. "/*.md",
+      "BufNewFile " .. notes_path .. "/*.md",
+    },
+    dependencies = {
+      -- required
+      "nvim-lua/plenary.nvim",
+      -- If using blink.cmp, ensure it's a dependency
+      {
+        "saghen/blink.cmp",
+        dependencies = {
+          { "saghen/blink.compat", branch = "main" },
+        },
+      },
+    },
+    opts = {
+      legacy_commands = false,
+      -- point the plugin at your single workspace (~/notes)
+      workspaces = {
+        {
+          name = "notes",
+          path = notes_path,
+        },
+      },
+      completion = {
+        nvim_cmp = false, -- Disable nvim-cmp if you're using blink.cmp
+        blink = true,     -- Enable blink.cmp
+        min_chars = 1,    -- Minimum characters to trigger completion
+      },
+      -- other obsidian.nvim options may be added here if you want
+    },
+  }
 }

@@ -233,10 +233,10 @@ vim.keymap.set("n", "<leader>wo", "<C-W>o", { desc = "Close Other Windows", rema
 -- Buffer Actions
 vim.keymap.set("n", "<leader>fn", "<cmd>enew<cr>", { desc = "New File (Buffer)" })
 vim.keymap.set("n", "<leader>bd", function()
-  require("snacks").bufdelete()
+  Snacks.bufdelete()
 end, { desc = "Delete Buffer" })
 vim.keymap.set("n", "<leader>bo", function()
-  require("snacks").bufdelete.other()
+  Snacks.bufdelete.other()
 end, { desc = "Delete Other Buffers" })
 vim.keymap.set("n", "<leader>by", copy_buffers_to_clipboard, { desc = "Copy All Buffers to Clipboard" })
 
@@ -294,7 +294,7 @@ vim.keymap.set("n", "]q", "<cmd>cnext<cr>", { desc = "Next Quickfix Item" })
 if vim.fn.executable("lazygit") == 1 then
   vim.keymap.set("n", "<leader>gg", function()
     local git_root = require("utils.git").get_git_root()
-    require("snacks").lazygit({ cwd = git_root or vim.loop.cwd() })
+    Snacks.lazygit({ cwd = git_root or vim.loop.cwd() })
   end, { desc = "Lazygit (Smart CWD)" })
 end
 
@@ -319,10 +319,12 @@ vim.keymap.set("n", "<leader>ud", function()
 end, { desc = "Toggle Diagnostics" })
 
 -- Terminals
-vim.keymap.set({ "n", "i", "v", "t" }, "<C-/>", function()
+local function toggle_terminal()
   local git_root = require("utils.git").get_git_root()
-  require("snacks").terminal.toggle(nil, { cwd = git_root or vim.loop.cwd() })
-end, { desc = "Toggle Terminal (Git Root or CWD)" })
+  Snacks.terminal.toggle(nil, { cwd = git_root or vim.loop.cwd() })
+end
+vim.keymap.set({ "n", "i", "v", "t" }, "<C-_>", toggle_terminal, { desc = "Toggle Terminal (Git Root or CWD)" })
+vim.keymap.set({ "n", "i", "v", "t" }, "<C-/>", toggle_terminal, { desc = "Toggle Terminal (Git Root or CWD)" })
 vim.keymap.set("t", "<Esc><Esc>", "<cmd>close<cr>", { desc = "Hide Terminal" }) -- Use double-escape to exit
 
 -- Git
@@ -527,19 +529,39 @@ vim.keymap.set("n", "<leader>oc", "<Plug>(AddRemoveCheckbox)", { remap = true, s
 vim.keymap.set("n", "<leader>ot", "<Plug>(ToggleCheckbox)", { remap = true, silent = true })
 
 
--- Snakcs Picker Keymaps
+local function fff_grep_selection_or_word()
+  local query
+  local mode = vim.fn.mode()
 
-local Snacks = require("snacks")
+  if mode == "v" or mode == "V" then
+    local start_pos = vim.fn.getpos("'<")
+    local end_pos = vim.fn.getpos("'>")
+    local lines = vim.api.nvim_buf_get_text(
+      0,
+      start_pos[2] - 1,
+      start_pos[3] - 1,
+      end_pos[2] - 1,
+      end_pos[3],
+      {}
+    )
+    query = table.concat(lines, "\n")
+  end
+
+  query = (query and query ~= "") and query or vim.fn.expand("<cword>")
+  require("fff").live_grep({ query = query })
+end
+
 -- Top Pickers & Explorer
-vim.keymap.set("n", "<leader><space>", function() Snacks.picker.smart() end, { desc = "Smart Find Files" })
+-- FFF trial mappings (old Snacks equivalents kept below as comments for easy rollback)
+vim.keymap.set("n", "<leader><space>", function() require("fff").find_files() end, { desc = "Smart Find Files" })
 vim.keymap.set("n", "<leader>,", function() Snacks.picker.buffers() end, { desc = "Buffers" })
-vim.keymap.set("n", "<leader>/", function() Snacks.picker.grep() end, { desc = "Grep" })
+vim.keymap.set("n", "<leader>/", function() require("fff").live_grep() end, { desc = "Grep" })
 vim.keymap.set("n", "<leader>:", function() Snacks.picker.command_history() end, { desc = "Command History" })
 vim.keymap.set("n", "<leader>n", function() Snacks.picker.notifications() end, { desc = "Notification History" })
 vim.keymap.set("n", "<leader>fb", function() Snacks.picker.buffers() end, { desc = "Buffers" })
-vim.keymap.set("n", "<leader>fc", function() Snacks.picker.files({ cwd = vim.fn.stdpath("config") }) end,
+vim.keymap.set("n", "<leader>fc", function() require("fff").find_files_in_dir(vim.fn.stdpath("config")) end,
   { desc = "Find Config File" })
-vim.keymap.set("n", "<leader>ff", function() Snacks.picker.files() end, { desc = "Find Files" })
+vim.keymap.set("n", "<leader>ff", function() require("fff").find_files() end, { desc = "Find Files" })
 vim.keymap.set("n", "<leader>fg", function() Snacks.picker.git_files() end, { desc = "Find Git Files" })
 vim.keymap.set("n", "<leader>fp", function() Snacks.picker.projects() end, { desc = "Projects" })
 vim.keymap.set("n", "<leader>fr", function() Snacks.picker.recent() end, { desc = "Recent" })
@@ -552,9 +574,17 @@ vim.keymap.set("n", "<leader>gd", function() Snacks.picker.git_diff() end, { des
 vim.keymap.set("n", "<leader>gf", function() Snacks.picker.git_log_file() end, { desc = "Git Log File" })
 vim.keymap.set("n", "<leader>sb", function() Snacks.picker.lines() end, { desc = "Buffer Lines" })
 vim.keymap.set("n", "<leader>sB", function() Snacks.picker.grep_buffers() end, { desc = "Grep Open Buffers" })
-vim.keymap.set("n", "<leader>sg", function() Snacks.picker.grep() end, { desc = "Grep" })
-vim.keymap.set({ "n", "x" }, "<leader>sw", function() Snacks.picker.grep_word() end,
+vim.keymap.set("n", "<leader>sg", function() require("fff").live_grep() end, { desc = "Grep" })
+vim.keymap.set({ "n", "x" }, "<leader>sw", fff_grep_selection_or_word,
   { desc = "Visual selection or word", })
+-- vim.keymap.set("n", "<leader><space>", function() Snacks.picker.smart() end, { desc = "Smart Find Files" })
+-- vim.keymap.set("n", "<leader>/", function() Snacks.picker.grep() end, { desc = "Grep" })
+-- vim.keymap.set("n", "<leader>fc", function() Snacks.picker.files({ cwd = vim.fn.stdpath("config") }) end,
+--   { desc = "Find Config File" })
+-- vim.keymap.set("n", "<leader>ff", function() Snacks.picker.files() end, { desc = "Find Files" })
+-- vim.keymap.set("n", "<leader>sg", function() Snacks.picker.grep() end, { desc = "Grep" })
+-- vim.keymap.set({ "n", "x" }, "<leader>sw", function() Snacks.picker.grep_word() end,
+--   { desc = "Visual selection or word", })
 vim.keymap.set("n", '<leader>s"', function() Snacks.picker.registers() end, { desc = "Registers" })
 vim.keymap.set("n", '<leader>s/', function() Snacks.picker.search_history() end, { desc = "Search History" })
 vim.keymap.set("n", "<leader>sa", function() Snacks.picker.autocmds() end, { desc = "Autocmds" })
@@ -576,11 +606,102 @@ vim.keymap.set("n", "<leader>sq", function() Snacks.picker.qflist() end, { desc 
 vim.keymap.set("n", "<leader>sR", function() Snacks.picker.resume() end, { desc = "Resume" })
 vim.keymap.set("n", "<leader>su", function() Snacks.picker.undo() end, { desc = "Undo History" })
 vim.keymap.set("n", "<leader>uC", function() Snacks.picker.colorschemes() end, { desc = "Colorschemes" })
+vim.keymap.set("n", "<leader>st", function() Snacks.picker.todo_comments() end, { desc = "Todo" })
+-- LSP Navigation
 vim.keymap.set("n", "gd", function() Snacks.picker.lsp_definitions() end, { desc = "Goto Definition" })
 vim.keymap.set("n", "gD", function() Snacks.picker.lsp_declarations() end, { desc = "Goto Declaration" })
 vim.keymap.set("n", "gr", function() Snacks.picker.lsp_references() end, { nowait = true, desc = "References" })
-vim.keymap.set("n", "gI", function() Snacks.picker.lsp_implementations() end, { desc = "Goto Implementation" })
+vim.keymap.set("n", "gi", function() Snacks.picker.lsp_implementations() end, { desc = "Goto Implementation" })
 vim.keymap.set("n", "gy", function() Snacks.picker.lsp_type_definitions() end, { desc = "Goto T[y]pe Definition" })
 vim.keymap.set("n", "<leader>ss", function() Snacks.picker.lsp_symbols() end, { desc = "LSP Symbols" })
-vim.keymap.set("n", "<leader>sS", function() Snacks.picker.lsp_workspace_symbols() end,
-  { desc = "LSP Workspace Symbols" })
+vim.keymap.set("n", "<leader>sS", function() Snacks.picker.lsp_workspace_symbols() end, { desc = "LSP Workspace Symbols" })
+
+-- LSP Actions
+vim.keymap.set("n", "K", vim.lsp.buf.hover, { desc = "Hover Documentation" })
+vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, { desc = "Rename Symbol" })
+vim.keymap.set({ "n", "v" }, "<leader>ca", function()
+  if vim.fn.mode() == "v" or vim.fn.mode() == "V" then
+    vim.lsp.buf.range_code_action()
+  else
+    vim.lsp.buf.code_action()
+  end
+end, { desc = "Code Actions" })
+
+-- LSP Workspace
+vim.keymap.set("n", "<leader>wa", vim.lsp.buf.add_workspace_folder, { desc = "Add Workspace Folder" })
+vim.keymap.set("n", "<leader>wr", vim.lsp.buf.remove_workspace_folder, { desc = "Remove Workspace Folder" })
+vim.keymap.set("n", "<leader>wl", function()
+  print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
+end, { desc = "List Workspace Folders" })
+
+-- Inlay Hints Toggle (Neovim 0.10+)
+if vim.lsp.inlay_hint and vim.lsp.inlay_hint.enable then
+  vim.keymap.set("n", "<leader>uh", function()
+    vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled())
+  end, { desc = "Toggle Inlay Hints" })
+end
+vim.keymap.set("n", "<leader>*", function()
+  require("fff").live_grep({ query = vim.fn.expand("<cword>") })
+end, { desc = "Search word under cursor across project" })
+-- vim.keymap.set("n", "<leader>*", function()
+--   Snacks.picker.grep_word()
+-- end, { desc = "Search word under cursor across project" })
+
+-- Todo Comments
+vim.keymap.set("n", "]t", function()
+  require("todo-comments").jump_next()
+end, { desc = "Next todo comment" })
+
+vim.keymap.set("n", "[t", function()
+  require("todo-comments").jump_prev()
+end, { desc = "Previous todo comment" })
+-- Quick Access Terminal
+-- vim.keymap.set("n", "<F4>", function()
+--   local dir
+--   if vim.bo.filetype == "oil" then
+--     dir = vim.fn.expand("%:p")   -- oil buffer = directory itself
+--   else
+--     dir = vim.fn.expand("%:p:h") -- normal file buffer
+--   end
+--   dir = dir ~= "" and dir or vim.loop.cwd()
+--
+--   vim.fn.setreg("+", dir)
+-- end, { desc = "Toggle Quick Access Terminal" })
+
+
+
+local function jq_error_jump()
+  local file = vim.fn.expand("%:p")
+  if file == "" then
+    print("No file")
+    return
+  end
+
+  local cmd = "jq length < " .. vim.fn.shellescape(file)
+  local output = vim.fn.system(cmd)
+
+  local line, col = output:match("line (%d+), column (%d+)")
+  if line and col then
+    line = tonumber(line)
+    col = tonumber(col)
+
+    local line_text = vim.fn.getline(line)
+    local line_len = #line_text
+
+    -- Decide how to jump
+    -- if col <= 1 then
+    --   vim.api.nvim_win_set_cursor(0, { line, 0 })
+    --   vim.notify("jq error at start of line " .. line, vim.log.levels.ERROR)
+    -- elseif col >= line_len - 1 then
+    --   vim.api.nvim_win_set_cursor(0, { line, line_len })
+    --   vim.notify("jq error at end of line " .. line, vim.log.levels.ERROR)
+    -- else
+    vim.api.nvim_win_set_cursor(0, { line, col - 1 })
+    vim.notify("Jumped to jq error at line " .. line .. ", col " .. col .. "\n" .. output, vim.log.levels.ERROR)
+    -- end
+  else
+    vim.notify(output, vim.log.levels.INFO)
+  end
+end
+
+vim.keymap.set("n", "<F4>", jq_error_jump, { desc = "Jump to jq error in JSON file" })

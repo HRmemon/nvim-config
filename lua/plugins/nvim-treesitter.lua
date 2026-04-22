@@ -1,5 +1,6 @@
 return {
 	"nvim-treesitter/nvim-treesitter",
+	event = { "BufReadPost", "BufNewFile", "BufWritePost" },
 	build = ":TSUpdate",
 	dependencies = {
 		-- This is the textobjects extension
